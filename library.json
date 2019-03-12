@@ -1,0 +1,22 @@
+{
+  "name": "S3B",
+  "keywords": "ncd, S3B, gateway",
+  "description": "S3B handler for NCD gateway devices",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/telliottosceola/ESP32_Gateway_S3B.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Travis Elliott",
+      "email": "travis@ncd.io",
+      "url": "http://ncd.io",
+      "maintainer": true
+    }
+  ],
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
