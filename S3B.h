@@ -17,6 +17,7 @@ public:
 	int atCommand(char* commandID, uint8_t* commandData, int dataLength);
 	bool enterConfigMode();
 	bool exitConfigMode();
+	void reset();
 
 	char localAddress[24] = "";
 	unsigned long localAddressRequestTime = 0;
@@ -32,9 +33,9 @@ public:
 	unsigned long txPowerTimeout = 2000;
 	bool moduleReady = false;
 	unsigned long lastComsTry = 0;
-	unsigned long moduleResponseTimeout = 4000;
+	unsigned long moduleResponseTimeout = 10000;
 	bool pendingRequest = false;
-	unsigned long checkModuleInterval = 3000;
+	unsigned long checkModuleInterval = 30000;
 	unsigned long lastReception;
 	unsigned long checkReceiverInterval = 3000;
 

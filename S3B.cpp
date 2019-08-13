@@ -15,6 +15,10 @@ void S3B::init(Settings &s){
 	#endif
 }
 
+void S3B::reset(){
+	pendingRequest = false;
+}
+
 bool S3B::handleSettings(){
 	if(strcmp(localAddress, "") == 0){
 		if(millis() > localAddressRequestTime+localAddressTimeout || localAddressRequestTime == 0){
@@ -510,8 +514,10 @@ void S3B::loop(){
 		_sLoadedCallback();
 	}
 
-	if(!serial1.available() && pendingRequest && millis() > lastComsTry+moduleResponseTimeout){
+	if(!serial1.available() && pendingRequest && millis() > lastComsTry+moduleResponseTimeout && millis() > lastReception+moduleResponseTimeout){
+
 		moduleReady = false;
+		pendingRequest = false;
 	}
 	while(serial1.available()){
 		uint8_t startByte;
@@ -598,9 +604,13 @@ void S3B::loop(){
 		}
 	}
 	if(handleSettings()){
-		if(millis() > lastComsTry+checkModuleInterval && settingsLoaded >= 4){
-			sendATReadCommand(serialLowCommand, 0);
+		if(millis() > lastComsTry+checkModuleInterval && settingsLoaded >= 4 && millis() > lastReception+checkModuleInterval){
+
 			if(!pendingRequest){
+				#ifdef DEBUG
+				Serial.printf("Sending read serial low command %i\n",millis());
+				#endif
+				sendATReadCommand(serialLowCommand, 0);
 				pendingRequest = true;
 				lastComsTry = millis();
 			}
