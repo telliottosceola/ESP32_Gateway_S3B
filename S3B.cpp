@@ -22,6 +22,9 @@ void S3B::reset(){
 bool S3B::handleSettings(){
 	if(strcmp(localAddress, "") == 0){
 		if(millis() > localAddressRequestTime+localAddressTimeout || localAddressRequestTime == 0){
+			serial1.end();
+			delay(100);
+			serial1.begin(115200);
 			sendATReadCommand(serialLowCommand, 0);
 			localAddressRequestTime = millis();
 			return false;
@@ -29,6 +32,9 @@ bool S3B::handleSettings(){
 	}else{
 		if(strcmp(networkID, "") == 0){
 			if(millis() > networkIDRequestTime+networkIDTimeout || networkIDRequestTime == 0){
+				serial1.end();
+				delay(100);
+				serial1.begin(115200);
 				sendATReadCommand(networkIDCommand, 2);
 				networkIDRequestTime = millis();
 				return false;
@@ -36,6 +42,9 @@ bool S3B::handleSettings(){
 		}else{
 			if(strcmp(preambleID, "") == 0){
 				if(millis() > preambleIDRequestTime+preambleIDTimeout || preambleIDRequestTime == 0){
+					serial1.end();
+					delay(100);
+					serial1.begin(115200);
 					sendATReadCommand(preambleCommand, 1);
 					preambleIDRequestTime = millis();
 					return false;
@@ -43,6 +52,9 @@ bool S3B::handleSettings(){
 			}else{
 				if(strcmp(txPower, "") == 0){
 					if(millis() > txPowerRequestTime+txPowerTimeout || txPowerRequestTime == 0){
+						serial1.end();
+						delay(100);
+						serial1.begin(115200);
 						sendATReadCommand(txPowerCommand, 3);
 						txPowerRequestTime = millis();
 						return false;
@@ -515,7 +527,9 @@ void S3B::loop(){
 	}
 
 	if(!serial1.available() && pendingRequest && millis() > lastComsTry+moduleResponseTimeout && millis() > lastReception+moduleResponseTimeout){
-
+		serial1.end();
+		delay(100);
+		serial1.begin(115200);
 		moduleReady = false;
 		pendingRequest = false;
 	}
