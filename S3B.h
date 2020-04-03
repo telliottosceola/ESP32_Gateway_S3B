@@ -4,7 +4,7 @@
 #include <Settings.h>
 class S3B{
 public:
-	void init(Settings& s);
+	void init(Settings& s, bool atEnable = true, int baudRate = 115200);
 	void transmit(uint8_t *address, uint8_t *data, int len);
 	bool blockingTransmit(uint8_t *address, uint8_t *data, int len, uint8_t *buffer, int bufferSize, unsigned long receiveTimeout);
 	int parseReceive(uint8_t *s3bData, char *buffer, int len);
@@ -21,17 +21,17 @@ public:
 
 	char localAddress[24] = "";
 	unsigned long localAddressRequestTime = 0;
-	unsigned long localAddressTimeout = 2000;
+	unsigned long localAddressTimeout = 30000;
 	char networkID[5] = "";
 	unsigned long networkIDRequestTime = 0;
-	unsigned long networkIDTimeout = 2000;
+	unsigned long networkIDTimeout = 30000;
 	char preambleID[2] = "";
 	unsigned long preambleIDRequestTime = 0;
-	unsigned long preambleIDTimeout = 2000;
+	unsigned long preambleIDTimeout = 30000;
 	char txPower[2] = "";
 	unsigned long txPowerRequestTime = 0;
-	unsigned long txPowerTimeout = 2000;
-	bool moduleReady = false;
+	unsigned long txPowerTimeout = 30000;
+	bool moduleReady = true;
 	unsigned long lastComsTry = 0;
 	unsigned long moduleResponseTimeout = 10000;
 	bool pendingRequest = false;
@@ -39,12 +39,15 @@ public:
 	unsigned long lastReception;
 	unsigned long checkReceiverInterval = 3000;
 
+	unsigned long lastLoop = 0;
+
 	void receiveDataCallback(void (*receiveCallback)(uint8_t* data, size_t len, uint8_t* transmitterAddress));
 	void rssiUpdateCallback(void(*rssiCallback)(int rssi, uint8_t* address));
 	void readSerialLowCallback(void(*serialLowCallback)(uint8_t* localMac));
 	void transmissionStatusCallback(void(*tcallBack)(uint8_t status));
 	void softwareATCallback(void(*sATCallback)(uint8_t*data, size_t len));
 	void settingsLoadedCallback(void(*_sLoadedCallback)());
+	void sensorDataCallback(void(*sLoadedCallback)(uint8_t* data, size_t len));
 
 	//AT Commands
 	uint8_t rssiCommand[2] = {0x44, 0x42};
@@ -64,6 +67,7 @@ private:
 	void (*_tcallBack)(uint8_t status);
 	void (*_sATCallback)(uint8_t*data, size_t len);
 	void (*_sLoadedCallback)();
+	void (*_sensorDataCallback)(uint8_t* data, size_t len);
 	uint8_t startDelimiter = 0x7E;
 	uint8_t frameType = 0x10;
 	uint8_t frameID = 0x01;
@@ -74,10 +78,12 @@ private:
 
 	unsigned long ackTimeOut = 3000;
 	uint8_t broadcastAddress[8] = {0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF};
+	bool atEnabled;
 
 	// void flashLED(int count);
 	void flushSerialPort();
 	bool getAddress();
+	void parseTransmitRequest(uint8_t* data, size_t len);
 	void parseATCommandResponse(uint8_t* data, size_t len);
 	void parseModemStatusResponse(uint8_t* data, size_t len);
 	void parseTransmitStatus(uint8_t* data, size_t len);

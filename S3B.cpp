@@ -3,13 +3,17 @@
 
 HardwareSerial serial1(2);
 
-void S3B::init(Settings &s){
+void S3B::init(Settings &s, bool atEnable, int baudRate){
 	deviceSettings = &s;
-	serial1.begin(115200);
+	serial1.begin(baudRate);
 	//Reset module settings in case ESP lost power/reset but XBee did not.
 	char factoryResetID[3] = "FR";
 	uint8_t commandData[0];
-	atCommand(factoryResetID, commandData, 0);
+	atEnabled = atEnable;
+	if(atEnable){
+		atCommand(factoryResetID, commandData, 0);
+	}
+
 	#ifdef DEBUG
 	Serial.println("module.init called");
 	#endif
@@ -521,12 +525,17 @@ bool S3B::exitConfigMode(){
 }
 
 void S3B::loop(){
-	if(boot && settingsLoaded == 4){
+	if(millis() - lastLoop > 1000){
+		float elapsed = (millis() - lastLoop)/1000.00;
+		Serial.printf("Seconds since last loop: %0.2f\n", elapsed);
+	}
+	lastLoop = millis();
+	if(boot && settingsLoaded == 4 && atEnabled){
 		boot = false;
 		_sLoadedCallback();
 	}
 
-	if(!serial1.available() && pendingRequest && millis() > lastComsTry+moduleResponseTimeout && millis() > lastReception+moduleResponseTimeout){
+	if(!serial1.available() && pendingRequest && millis() > lastComsTry+moduleResponseTimeout && millis() > lastReception+moduleResponseTimeout && atEnabled){
 		serial1.end();
 		delay(100);
 		serial1.begin(115200);
@@ -573,6 +582,8 @@ void S3B::loop(){
 			pendingRequest = false;
 			lastReception = millis();
 			switch(receiveBuffer[3]){
+				case 0x10:
+				parseTransmitRequest(receiveBuffer, newDataLength+4);
 				case 0x88:
 				//AT Command Response
 				parseATCommandResponse(receiveBuffer, newDataLength+4);
@@ -617,19 +628,26 @@ void S3B::loop(){
 			}
 		}
 	}
-	if(handleSettings()){
-		if(millis() > lastComsTry+checkModuleInterval && settingsLoaded >= 4 && millis() > lastReception+checkModuleInterval){
-
-			if(!pendingRequest){
-				#ifdef DEBUG
-				Serial.printf("Sending read serial low command %i\n",millis());
-				#endif
-				sendATReadCommand(serialLowCommand, 0);
-				pendingRequest = true;
-				lastComsTry = millis();
+	if(atEnabled){
+		if(handleSettings()){
+			if(millis() > lastComsTry+checkModuleInterval && settingsLoaded >= 4 && millis() > lastReception+checkModuleInterval){
+				if(!pendingRequest){
+					#ifdef DEBUG
+					Serial.printf("Sending read serial low command %i\n",millis());
+					#endif
+					sendATReadCommand(serialLowCommand, 0);
+					pendingRequest = true;
+					lastComsTry = millis();
+				}
 			}
 		}
 	}
+}
+
+void S3B::parseTransmitRequest(uint8_t* data, size_t len){
+	uint8_t newData[len-18];
+	memcpy(newData, data+17, sizeof(newData));
+	_sensorDataCallback(newData, sizeof(newData));
 }
 
 void S3B::parseATCommandResponse(uint8_t* data, size_t len){
@@ -796,4 +814,8 @@ void S3B::softwareATCallback(void(*sATCallback)(uint8_t*data, size_t len)){
 
 void S3B::settingsLoadedCallback(void(*sLoadedCallback)()){
 	_sLoadedCallback = sLoadedCallback;
+}
+
+void S3B::sensorDataCallback(void(*sLoadedCallback)(uint8_t* data, size_t len)){
+	_sensorDataCallback = sLoadedCallback;
 }
