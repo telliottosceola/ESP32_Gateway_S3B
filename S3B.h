@@ -1,10 +1,9 @@
 #ifndef S3B_H
 #define S3B_H
 #include "HardwareSerial.h"
-#include <Settings.h>
 class S3B{
 public:
-	void init(Settings& s, bool atEnable = true, int baudRate = 115200);
+	void init(bool atEnable = true, int baudRate = 115200);
 	void transmit(uint8_t *address, uint8_t *data, int len);
 	bool blockingTransmit(uint8_t *address, uint8_t *data, int len, uint8_t *buffer, int bufferSize, unsigned long receiveTimeout);
 	int parseReceive(uint8_t *s3bData, char *buffer, int len);
@@ -60,7 +59,6 @@ public:
 
 private:
 	bool addressLoaded = false;
-	Settings* deviceSettings;
 	void (*_receiveCallback)(uint8_t* data, size_t len, uint8_t* transmitterAddress);
 	void (*_rssiCallback)(int rssi, uint8_t* address);
 	void (*_serialLowCallback)(uint8_t* localMac);
