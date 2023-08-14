@@ -3,8 +3,7 @@
 
 HardwareSerial serial1(2);
 
-void S3B::init(Settings &s, bool atEnable, int baudRate){
-	deviceSettings = &s;
+void S3B::init(bool atEnable, int baudRate){
 	serial1.begin(baudRate);
 	//Reset module settings in case ESP lost power/reset but XBee did not.
 	char factoryResetID[3] = "FR";
@@ -578,6 +577,11 @@ void S3B::loop(){
       return;
     }
 		if(validateReceivedData(receiveBuffer, newDataLength+4)){
+			// Serial.print("Received(Wirelessly): ");
+			// for(int i = 0; i < sizeof(receiveBuffer); i++){
+			// 	Serial.printf("%02X ",receiveBuffer[i]);
+			// }
+			// Serial.println();
 			moduleReady = true;
 			pendingRequest = false;
 			lastReception = millis();
@@ -626,6 +630,8 @@ void S3B::loop(){
 				parseRemoteCommandResponse(receiveBuffer, newDataLength+4);
 				break;
 			}
+		}else{
+			Serial.println("Invalid transmission received");
 		}
 	}
 	if(atEnabled){
